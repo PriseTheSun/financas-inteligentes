@@ -23,18 +23,34 @@ export default function Auth() {
 
     try {
       if (view === 'sign_in') {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          if (error.message.includes('Email not confirmed')) {
+             throw new Error("Por favor, verifique seu e-mail e clique no link de confirmação antes de entrar.");
+          }
+          throw error;
+        }
       } else if (view === 'sign_up') {
-        const { error } = await supabase.auth.signUp({ 
+        
+        // Supabase will send an email to the user if "Confirm Email" is ENABLED in the dashboard.
+        const { error, data } = await supabase.auth.signUp({ 
           email, 
           password,
           options: {
-            emailRedirectTo: window.location.origin
+            // This is crucial for the email link to redirect back to the app 
+            // instead of a 404 page or localhost when deployed.
+            emailRedirectTo: window.location.origin, 
           }
         });
+        
         if (error) throw error;
-        setSuccess('Cadastro realizado! Verifique sua caixa de entrada para confirmar o e-mail (caso necessário) ou faça login.');
+        
+        if (data.user && data.user.identities && data.user.identities.length === 0) {
+           setError('Este e-mail já está em uso.');
+        } else {
+           setSuccess('Pronto! Acabamos de enviar um e-mail de confirmação para você. Vá até sua caixa de entrada, clique no link e depois faça login aqui.');
+        }
+
       } else if (view === 'forgot_password') {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/reset-password`,
