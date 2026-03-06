@@ -1,7 +1,17 @@
 -- SQL Schema for Finance App
--- Run this in your Supabase SQL Editor (https://supabase.com/dashboard/project/_/sql)
 
--- Create the transactions table
+-- 1. Primeiro removemos as políticas antigas
+DROP POLICY IF EXISTS "Allow public access" ON public.transactions;
+DROP POLICY IF EXISTS "Usuários podem ver suas próprias transações" ON public.transactions;
+DROP POLICY IF EXISTS "Usuários podem inserir suas próprias transações" ON public.transactions;
+DROP POLICY IF EXISTS "Usuários podem atualizar suas próprias transações" ON public.transactions;
+DROP POLICY IF EXISTS "Usuários podem deletar suas próprias transações" ON public.transactions;
+
+-- 2. Limpar transações antigas de "teste" que não têm um ID de usuário associado.
+-- (Este é o passo que previne o erro 23502 que você encontrou!)
+TRUNCATE TABLE public.transactions;
+
+-- 3. Criar tabela (caso não exista)
 CREATE TABLE IF NOT EXISTS public.transactions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
@@ -14,15 +24,35 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     tags TEXT[] DEFAULT '{}'::TEXT[]
 );
 
--- Enable Row Level Security (RLS)
+-- 4. Adicionar coluna user_id e relacionar com o auth.users do Supabase
+ALTER TABLE public.transactions 
+ADD COLUMN IF NOT EXISTS user_id UUID DEFAULT auth.uid() REFERENCES auth.users(id) NOT NULL;
+
+-- 5. Habilitar segurança a nível de linha (RLS)
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 
--- Create a policy that allows anyone to read/write (for demo purposes)
--- In a real app, you would restrict this to authenticated users
-CREATE POLICY "Allow public access" ON public.transactions
-    FOR ALL
-    USING (true)
-    WITH CHECK (true);
+-- 6. Criar Políticas Restritivas (Isolamento de Dados por Usuário)
 
--- Optional: Create an index on date for faster queries
-CREATE INDEX IF NOT EXISTS idx_transactions_date ON public.transactions(date);
+-- O usuário só pode VER suas próprias transações
+CREATE POLICY "Usuários podem ver suas próprias transações" 
+ON public.transactions FOR SELECT 
+USING (auth.uid() = user_id);
+
+-- O usuário só pode INSERIR para si mesmo
+CREATE POLICY "Usuários podem inserir suas próprias transações" 
+ON public.transactions FOR INSERT 
+WITH CHECK (auth.uid() = user_id);
+
+-- O usuário só pode ATUALIZAR suas próprias transações
+CREATE POLICY "Usuários podem atualizar suas próprias transações" 
+ON public.transactions FOR UPDATE 
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+-- O usuário só pode DELETAR suas próprias transações
+CREATE POLICY "Usuários podem deletar suas próprias transações" 
+ON public.transactions FOR DELETE 
+USING (auth.uid() = user_id);
+
+-- 7. Criar um índice na data e user_id para performance
+CREATE INDEX IF NOT EXISTS idx_transactions_user_date ON public.transactions(user_id, date);

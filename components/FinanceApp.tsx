@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, CheckCircle, Clock, Tag, TrendingUp, TrendingDown, BrainCircuit, Calendar as CalendarIcon, ChevronLeft, ChevronRight, LayoutGrid, List } from 'lucide-react';
+import { Plus, Trash2, Edit2, CheckCircle, Clock, Tag, TrendingUp, TrendingDown, BrainCircuit, Calendar as CalendarIcon, ChevronLeft, ChevronRight, LayoutGrid, List, LogOut } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval, addMonths, subMonths, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -10,9 +10,10 @@ import ReactMarkdown from 'react-markdown';
 import { Transaction, TransactionStatus, TransactionType } from '@/lib/types';
 import { getGeminiResponse } from '@/lib/gemini';
 import { useFinanceController } from '@/hooks/useFinanceController';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { Session } from '@supabase/supabase-js';
 
-export default function FinanceApp() {
+export default function FinanceApp({ session }: { session?: Session | null }) {
   const {
     transactions,
     loading,
@@ -253,6 +254,16 @@ export default function FinanceApp() {
         </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+          {session && (
+            <button
+              onClick={() => supabase.auth.signOut()}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-zinc-500 hover:text-rose-600 bg-white border border-zinc-200 rounded-2xl shadow-sm transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Sair
+            </button>
+          )}
+
           <div className="flex items-center gap-1 bg-white p-1 rounded-2xl shadow-sm border border-zinc-200 w-full sm:w-auto">
             <button 
               onClick={() => setViewMode('list')}
