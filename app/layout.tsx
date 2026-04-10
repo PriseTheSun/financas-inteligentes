@@ -15,6 +15,9 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: 'Finanças Inteligentes | IA',
   description: 'Controle suas finanças com inteligência artificial.',
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
