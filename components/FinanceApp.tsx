@@ -7,6 +7,7 @@ import { ptBR } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
+import rehypeSanitize from 'rehype-sanitize';
 import { Transaction, TransactionStatus, TransactionType } from '@/lib/types';
 import { getGeminiResponse } from '@/lib/gemini';
 import { useFinanceController } from '@/hooks/useFinanceController';
@@ -188,10 +189,7 @@ export default function FinanceApp({ session }: { session?: Session | null }) {
             <div>
               <p className="text-sm font-bold text-rose-900">Erro na conexão com Supabase</p>
               <div className="text-xs text-rose-700 space-y-1">
-                <p>{supabaseErrorMessage || 'Não conseguimos acessar o banco de dados.'}</p>
-                {supabaseErrorCode && (
-                  <p className="font-mono bg-rose-100/50 px-1 py-0.5 rounded inline-block">Código: {supabaseErrorCode}</p>
-                )}
+                <p>Ocorreu um problema ao conectar com o banco de dados. Por favor, verifique sua conexão ou tente novamente mais tarde.</p>
                 {supabaseErrorCode === 'PGRST116' || supabaseErrorMessage?.includes('relation') ? (
                   <div className="mt-2 p-3 bg-rose-100/50 rounded-xl border border-rose-200">
                     <p className="font-bold text-rose-800">Aviso: A tabela &apos;transactions&apos; não foi encontrada.</p>
@@ -575,7 +573,7 @@ export default function FinanceApp({ session }: { session?: Session | null }) {
                   </button>
                 </div>
                 <div className="prose prose-zinc prose-sm max-w-none text-zinc-600 leading-relaxed">
-                  <ReactMarkdown>{aiResponse}</ReactMarkdown>
+                  <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{aiResponse}</ReactMarkdown>
                 </div>
               </motion.div>
             )}

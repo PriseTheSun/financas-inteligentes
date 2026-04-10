@@ -1,5 +1,5 @@
 {
-  "name": "ai-studio-applet",
+  "name": "financas-inteligentes",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -25,6 +25,7 @@
     "react-dom": "^19.2.1",
     "react-markdown": "^10.1.0",
     "recharts": "^3.7.0",
+    "rehype-sanitize": "^6.0.0",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
